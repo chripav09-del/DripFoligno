@@ -312,3 +312,4 @@
 }
 .modulo__info{margin:var(--s1) 0 0;font-size:.875rem}
 .hero .link,.sez--fine .link,.ptesta .link{color:var(--espresso)}
+.v60__timer b,.voce__prezzo,.piatto__prezzo,.caffe__prezzi,.caffe__punti b,.voto b,.orari td{font-variant-numeric:lining-nums tabular-nums}
