@@ -1,4 +1,4 @@
-import { avviaV60 } from "./v60.js";
+import { mosaico } from "./mosaico.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const STATICO = /statico/.test(location.search); // solo per i controlli: tutto visibile subito
@@ -33,20 +33,31 @@ $$("[data-stato]").forEach((el) => {
 const oggi = oraRoma().g;
 $$(".orari tr").forEach((tr) => { if (+tr.dataset.g === (oggi + 6) % 7) tr.classList.add("oggi"); });
 
-/* ingressi: le foto si scoprono dall'angolo, le tessere girano, i titoli salgono */
-const daRivelare = [...$$(".quarto"), ...$$(".tessere"), ...$$(".testa"), ...$$(".cartellini"), ...$$(".caro--caffe")];
-$$(".cartellini li").forEach((li, k) => li.style.setProperty("--k", k));
-if (STATICO) {
-  document.querySelectorAll("img").forEach((i) => (i.loading = "eager"));
-  daRivelare.forEach((el) => el.classList.add("in"));
-} else if ("IntersectionObserver" in window) {
-  daRivelare.forEach((el) => { if (!el.closest(".hero")) el.classList.add("rivela"); });
-  $$(".hero .tessere").forEach((el) => el.classList.add("in"));
+/* il bancone: su telefono e desktop la composizione cambia (colonne, righe, posto della foto) */
+const desk = matchMedia("(min-width: 900px)").matches;
+$$("[data-mosaico]").forEach((el) => {
+  const [c, r, ...foto] = (desk ? el.dataset.d : el.dataset.m).split(",").map(Number);
+  el.dataset.cols = c; el.dataset.rows = r;
+  el.style.setProperty("--cols", c); el.style.setProperty("--rows", r);
+  if (foto.length === 4) {
+    el.dataset.foto = foto.join(",");
+    el.style.setProperty("--fx", (foto[0] / c) * 100 + "%"); el.style.setProperty("--fy", (foto[1] / r) * 100 + "%");
+    el.style.setProperty("--fw", (foto[2] / c) * 100 + "%"); el.style.setProperty("--fh", (foto[3] / r) * 100 + "%");
+  }
+  mosaico(el);
+  if (STATICO) el.classList.add("pronto", "vivo");
+});
+
+/* ingressi sobri: titoli e foto salgono di poco, una volta */
+const daRivelare = [...$$(".testa"), ...$$(".rivela-su")];
+if (!STATICO && "IntersectionObserver" in window) {
+  daRivelare.forEach((el) => el.classList.add("rivela"));
   const io = new IntersectionObserver((voci) => voci.forEach((v) => {
     if (v.isIntersecting) { v.target.classList.add("in"); io.unobserve(v.target); }
-  }), { rootMargin: "0px 0px -12% 0px", threshold: 0.05 });
+  }), { rootMargin: "0px 0px -10% 0px", threshold: 0.05 });
   daRivelare.forEach((el) => io.observe(el));
 }
+if (STATICO) document.querySelectorAll("img").forEach((i) => (i.loading = "eager"));
 
 /* caroselli: frecce, trascinamento col mouse, tastiera */
 $$("[data-caro]").forEach((c) => {
@@ -83,18 +94,6 @@ $$("[data-caro]").forEach((c) => {
   });
   agg(); addEventListener("resize", agg);
 });
-
-/* estrazione V60 + avviso «filtro pronto» */
-const pronto = $("[data-pronto]");
-const v60 = $("[data-v60]");
-if (v60) {
-  avviaV60(v60, () => {
-    if (!pronto) return;
-    pronto.hidden = false;
-    setTimeout(() => (pronto.hidden = true), 9000);
-  });
-}
-pronto && $("[data-chiudi]", pronto).addEventListener("click", () => (pronto.hidden = true));
 
 /* menù: filtri dieta + sezione corrente */
 const menu = $("[data-menu]");
